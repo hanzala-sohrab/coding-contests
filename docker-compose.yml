@@ -1,0 +1,21 @@
+# Contest database. Judge0 runs separately (see README).
+services:
+  db:
+    image: postgres:16.2
+    environment:
+      POSTGRES_USER: contest
+      POSTGRES_PASSWORD: contest
+      POSTGRES_DB: contest
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - contest-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U contest -d contest"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+volumes:
+  contest-db:

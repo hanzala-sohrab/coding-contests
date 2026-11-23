@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+code, pre, textarea.code {
+  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+/* Problem statements rendered from Markdown. */
+.statement h2 { @apply mt-6 mb-2 text-lg font-semibold; }
+.statement h3 { @apply mt-4 mb-2 font-semibold; }
+.statement p { @apply my-3 leading-7; }
+.statement ul { @apply my-3 list-disc pl-6; }
+.statement ol { @apply my-3 list-decimal pl-6; }
+.statement code { @apply rounded bg-zinc-100 px-1 py-0.5 text-[0.9em] dark:bg-zinc-800; }
+.statement pre { @apply my-3 overflow-x-auto rounded-md bg-zinc-100 p-3 dark:bg-zinc-900; }
+.statement pre code { @apply bg-transparent p-0; }
+.statement table { @apply my-3 border-collapse text-sm; }
+.statement th, .statement td { @apply border border-zinc-300 px-2 py-1 dark:border-zinc-700; }
+.statement strong { @apply font-semibold; }
