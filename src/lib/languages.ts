@@ -3,6 +3,7 @@
 export type Language = {
   id: number;
   name: string;
+  monaco: string; // Monaco language id for syntax highlighting
   timeFactor: number;
   template: string;
 };
@@ -11,6 +12,7 @@ export const LANGUAGES: Language[] = [
   {
     id: 54,
     name: "C++17 (GCC 9.2)",
+    monaco: "cpp",
     timeFactor: 1,
     template: `#include <bits/stdc++.h>
 using namespace std;
@@ -26,6 +28,7 @@ int main() {
   {
     id: 50,
     name: "C (GCC 9.2)",
+    monaco: "c",
     timeFactor: 1,
     template: `#include <stdio.h>
 
@@ -38,6 +41,7 @@ int main(void) {
   {
     id: 62,
     name: "Java 13 (class Main)",
+    monaco: "java",
     timeFactor: 2,
     template: `import java.io.*;
 import java.util.*;
@@ -53,6 +57,7 @@ public class Main {
   {
     id: 71,
     name: "Python 3.8",
+    monaco: "python",
     timeFactor: 3,
     template: `import sys
 input = sys.stdin.readline
@@ -68,6 +73,7 @@ main()
   {
     id: 63,
     name: "JavaScript (Node.js 12)",
+    monaco: "javascript",
     timeFactor: 2,
     template: `const lines = require("fs").readFileSync(0, "utf8").split("\\n");
 `,
@@ -75,6 +81,7 @@ main()
   {
     id: 60,
     name: "Go 1.13",
+    monaco: "go",
     timeFactor: 1,
     template: `package main
 
@@ -95,6 +102,7 @@ func main() {
   {
     id: 73,
     name: "Rust 1.40",
+    monaco: "rust",
     timeFactor: 1,
     template: `use std::io::{self, Read};
 

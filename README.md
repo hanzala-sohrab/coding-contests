@@ -40,6 +40,10 @@ Open http://localhost:3000. Register the username listed in `ADMIN_USERNAMES` (d
 to get an admin account. Admins can see problems before the start, submit at any time without
 a cooldown, see all submissions, and are not ranked.
 
+The code editor is [Monaco](https://microsoft.github.io/monaco-editor/), served from this app
+(`npm install`, `dev` and `build` copy it into `public/monaco/`), so it works without internet
+access. Ctrl/⌘ + Enter submits.
+
 The server listens on all interfaces, so contestants on your network can join at
 `http://<your-ip>:3000`. Judge0 and Postgres stay bound to localhost.
 

@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/copy-monaco.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/copy-monaco.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -12,9 +14,12 @@
     "problems:sync": "tsx --env-file=.env scripts/sync-problems.mts",
     "setup": "npm run db:up && npm run db:migrate && npm run problems:sync",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:e2e": "tsx --env-file=.env tests/e2e.mts"
+    "test:e2e": "tsx --env-file=.env tests/e2e.mts",
+    "postinstall": "node scripts/copy-monaco.mjs"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "monaco-editor": "^0.57.0",
     "next": "16.4.6",
     "postgres": "^4.1.1",
     "react": "19.3.0",

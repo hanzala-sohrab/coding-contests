@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LANGUAGES } from "@/lib/languages";
+import { CodeEditor } from "./code-editor";
 
 export function SubmitForm({ problem }: { problem: string }) {
   const router = useRouter();
@@ -19,17 +20,10 @@ export function SubmitForm({ problem }: { problem: string }) {
     setLanguageId(id);
   }
 
-  function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key !== "Tab" || e.shiftKey) return;
-    e.preventDefault();
-    const el = e.currentTarget;
-    const { selectionStart: start, selectionEnd: end } = el;
-    const next = code.slice(0, start) + "    " + code.slice(end);
-    setCode(next);
-    requestAnimationFrame(() => el.setSelectionRange(start + 4, start + 4));
-  }
+  const language = LANGUAGES.find((l) => l.id === languageId) ?? LANGUAGES[0];
 
   async function submit() {
+    if (busy || code.trim() === "") return;
     setBusy(true);
     setError(null);
     const res = await fetch("/api/submissions", {
@@ -62,15 +56,7 @@ export function SubmitForm({ problem }: { problem: string }) {
         </select>
         {languageId === 62 && <span className="text-xs text-zinc-500">Your class must be named <code>Main</code>.</span>}
       </div>
-      <textarea
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        onKeyDown={onKeyDown}
-        spellCheck={false}
-        name="source"
-        aria-label="Source code"
-        className="code h-96 w-full resize-y rounded-md border border-zinc-300 bg-zinc-50 p-3 text-[13px] leading-5 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
-      />
+      <CodeEditor value={code} onChange={setCode} language={language.monaco} onSubmitShortcut={submit} />
       <div className="flex items-center gap-3">
         <button
           onClick={submit}
@@ -79,6 +65,7 @@ export function SubmitForm({ problem }: { problem: string }) {
         >
           {busy ? "Submitting…" : "Submit"}
         </button>
+        <span className="text-xs text-zinc-500">or Ctrl/⌘ + Enter</span>
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
     </div>

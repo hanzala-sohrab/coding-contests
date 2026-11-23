@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored Monaco editor build (scripts/copy-monaco.mjs).
+    "public/monaco/**",
   ]),
 ]);
 
