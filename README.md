@@ -32,7 +32,7 @@ the app talks to Judge0.
 ```sh
 cp .env.example .env
 npm install
-npm run setup        # starts Postgres, creates tables, imports problems/
+npm run setup        # starts Postgres, creates tables, imports problems/ and problems-game/
 npm run build && npm start
 ```
 
@@ -68,7 +68,25 @@ problems/
 Run `npm run problems:sync` after any change. Re-syncing is safe during a contest: problems are
 updated in place and past submissions are kept (they are not rejudged).
 
-## Rules
+## Fastest Finger First
+
+A live game mode at `/game`. Anyone signed in can host: pick the number of rounds and the time per
+round, then share the 6-character room code. Players join with the code, and the host presses Start.
+
+- Every round shows all players the same random problem from `problems-game/` at the same moment.
+  The first correct submission wins the round; after a 5-second winner banner the next round starts.
+- "First" means **earliest submitted**, not earliest judged. A round is decided only when every
+  submission made before the earliest accepted one has its verdict, so a fast C++ solution cannot
+  beat a Python solution that was submitted earlier but takes longer to judge.
+- When the timer runs out, no new submissions are taken, but those already in still count. If none
+  is accepted, nobody scores. The host can skip a round or end the game at any time.
+- Most rounds won takes the game. Game submissions never affect the contest leaderboard.
+
+Game problems use the same folder format as contest problems, without `label` and `points`. Run
+`npm run problems:sync` after changing them. Rooms update live over server-sent events. The
+intermission length and per-player cooldown are constants at the top of `src/lib/game.ts`.
+
+## Contest rules
 
 - **Verdict** is that of the first failing test, in order (samples first): `WA`, `TLE`, `MLE`,
   `RE`, `CE`, or `AC` if all pass.
@@ -87,7 +105,7 @@ from `curl http://127.0.0.1:2358/languages`.
 
 ```sh
 npm run typecheck && npm run lint
-npm run test:e2e     # needs the app (npm start) and Judge0 running
+npm run test:e2e     # contest + game suites; need the app (npm start) and Judge0 running
 ```
 
 The end-to-end suite submits real solutions in every language and checks verdicts, limits,

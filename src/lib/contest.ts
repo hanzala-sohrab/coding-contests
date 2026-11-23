@@ -32,7 +32,7 @@ export type ProblemSummary = {
 };
 
 export async function listProblems(): Promise<ProblemSummary[]> {
-  return sql<ProblemSummary[]>`SELECT id, slug, label, title, points FROM problems ORDER BY label`;
+  return sql<ProblemSummary[]>`SELECT id, slug, label, title, points FROM problems WHERE pool = 'contest' ORDER BY label`;
 }
 
 export type Problem = ProblemSummary & {
@@ -45,7 +45,7 @@ export type Problem = ProblemSummary & {
 export async function getProblem(slug: string): Promise<Problem | null> {
   const [p] = await sql<
     { id: number; slug: string; label: string; title: string; points: number; statement: string; time_limit: number; memory_limit: number }[]
-  >`SELECT id, slug, label, title, points, statement, time_limit, memory_limit FROM problems WHERE slug = ${slug}`;
+  >`SELECT id, slug, label, title, points, statement, time_limit, memory_limit FROM problems WHERE slug = ${slug} AND pool = 'contest'`;
   if (!p) return null;
   const samples = await sql<{ input: string; output: string }[]>`
     SELECT input, expected_output AS output FROM test_cases

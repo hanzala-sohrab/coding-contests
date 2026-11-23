@@ -23,6 +23,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </Link>
             <Link href="/" className={navLink}>Problems</Link>
             <Link href="/leaderboard" className={navLink}>Leaderboard</Link>
+            <Link href="/game" className={navLink}>Fastest Finger</Link>
             {user && <Link href="/submissions" className={navLink}>{user.isAdmin ? "All submissions" : "My submissions"}</Link>}
             <div className="ml-auto flex items-center gap-2 text-sm">
               {user ? (

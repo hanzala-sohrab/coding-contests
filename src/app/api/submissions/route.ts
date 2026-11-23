@@ -36,11 +36,11 @@ export async function POST(req: Request) {
 
     const [recent] = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM submissions
-      WHERE user_id = ${user.id} AND created_at > now() - make_interval(secs => ${COOLDOWN_SECONDS})`;
+      WHERE user_id = ${user.id} AND game_round_id IS NULL AND created_at > now() - make_interval(secs => ${COOLDOWN_SECONDS})`;
     if (recent.n > 0) return jsonError(429, `Please wait ${COOLDOWN_SECONDS} seconds between submissions`);
   }
 
-  const [problem] = await sql<{ id: number }[]>`SELECT id FROM problems WHERE slug = ${slug}`;
+  const [problem] = await sql<{ id: number }[]>`SELECT id FROM problems WHERE slug = ${slug} AND pool = 'contest'`;
   if (!problem) return jsonError(404, "Unknown problem");
 
   const id = await createSubmission({ userId: user.id, problemId: problem.id, languageId, sourceCode });

@@ -18,9 +18,15 @@ export default async function SubmissionPage(props: PageProps<"/submissions/[id]
           Submission #{sub.id} by {sub.username} · {new Date(sub.createdAt).toLocaleString("en-GB")}
         </p>
         <h1 className="mt-1 text-xl font-semibold">
-          <Link href={`/problems/${sub.problem.slug}`} className="hover:underline">
-            {sub.problem.label}. {sub.problem.title}
-          </Link>
+          {sub.gameCode ? (
+            <Link href={`/game/${sub.gameCode}`} className="hover:underline">
+              {sub.problem.title} · Fastest Finger First room {sub.gameCode}
+            </Link>
+          ) : (
+            <Link href={`/problems/${sub.problem.slug}`} className="hover:underline">
+              {sub.problem.label}. {sub.problem.title}
+            </Link>
+          )}
         </h1>
       </div>
       <SubmissionLive initial={sub} />

@@ -11,6 +11,8 @@ export type SubmissionView = {
   id: number;
   username: string;
   problem: { slug: string; label: string; title: string };
+  /** Room code when this submission was made in a Fastest Finger First game. */
+  gameCode: string | null;
   language: string;
   verdict: Verdict;
   failedTest: number | null;
@@ -29,12 +31,13 @@ export async function getSubmissionView(id: number, viewer: User): Promise<Submi
     {
       id: number; user_id: number; username: string; slug: string; label: string; title: string; language_id: number;
       verdict: Verdict; failed_test: number | null; compile_output: string | null; message: string | null;
-      time: number | null; memory: number | null; created_at: Date; source_code: string;
+      time: number | null; memory: number | null; created_at: Date; source_code: string; game_code: string | null;
     }[]
   >`
     SELECT s.id, s.user_id, u.username, p.slug, p.label, p.title, s.language_id, s.verdict, s.failed_test,
-           s.compile_output, s.message, s.time, s.memory, s.created_at, s.source_code
+           s.compile_output, s.message, s.time, s.memory, s.created_at, s.source_code, gr.code AS game_code
     FROM submissions s JOIN users u ON u.id = s.user_id JOIN problems p ON p.id = s.problem_id
+    LEFT JOIN game_rounds rd ON rd.id = s.game_round_id LEFT JOIN game_rooms gr ON gr.id = rd.room_id
     WHERE s.id = ${id}`;
   if (!s || (s.user_id !== viewer.id && !viewer.isAdmin)) return null;
 
@@ -45,6 +48,7 @@ export async function getSubmissionView(id: number, viewer: User): Promise<Submi
     id: s.id,
     username: s.username,
     problem: { slug: s.slug, label: s.label, title: s.title },
+    gameCode: s.game_code,
     language: getLanguage(s.language_id)?.name ?? `#${s.language_id}`,
     verdict: s.verdict,
     failedTest: s.failed_test,
@@ -87,6 +91,6 @@ export async function listSubmissions(viewer: User, limit = 100): Promise<Submis
     SELECT s.id, u.username, p.label, p.slug, p.title, s.language_id AS "languageId", s.verdict,
            s.time, s.memory, s.created_at AS "createdAt"
     FROM submissions s JOIN users u ON u.id = s.user_id JOIN problems p ON p.id = s.problem_id
-    WHERE ${viewer.isAdmin} OR s.user_id = ${viewer.id}
+    WHERE s.game_round_id IS NULL AND (${viewer.isAdmin} OR s.user_id = ${viewer.id})
     ORDER BY s.id DESC LIMIT ${limit}`;
 }

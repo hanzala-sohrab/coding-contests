@@ -30,7 +30,7 @@ export async function computeLeaderboard(contest: Contest, problems: ProblemSumm
   const subs = await sql<{ user_id: number; username: string; problem_id: number; verdict: string; created_at: Date }[]>`
     SELECT s.user_id, u.username, s.problem_id, s.verdict, s.created_at
     FROM submissions s JOIN users u ON u.id = s.user_id
-    WHERE NOT u.is_admin
+    WHERE NOT u.is_admin AND s.game_round_id IS NULL
       AND s.verdict NOT IN ('pending', 'CE', 'IE')
       AND s.created_at >= ${contest.startsAt} AND s.created_at < ${contest.endsAt}
     ORDER BY s.created_at, s.id`;

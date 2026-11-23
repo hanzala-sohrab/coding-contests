@@ -5,68 +5,9 @@
 import { sql } from "../src/lib/db";
 import type { Row } from "../src/lib/scoring";
 import type { SubmissionView } from "../src/lib/submissions";
+import { check, Client, crashed, deleteTestUsers, finish, LANG, PASSWORD, RUN } from "./helpers.mjs";
 
 type Leaderboard = { problems: { id: number; label: string; points: number }[]; rows: Row[] };
-
-const APP = process.env.APP_URL ?? "http://127.0.0.1:3000";
-const RUN = Date.now().toString(36).slice(-5);
-const PASSWORD = "e2e-password-123";
-
-let passed = 0;
-const failures: string[] = [];
-function check(name: string, ok: boolean, detail?: unknown) {
-  if (ok) {
-    passed++;
-    console.log(`  PASS  ${name}`);
-  } else {
-    failures.push(name);
-    console.log(`  FAIL  ${name}${detail !== undefined ? `\n        ${JSON.stringify(detail).slice(0, 400)}` : ""}`);
-  }
-}
-
-class Client {
-  cookie = "";
-  constructor(public username: string) {}
-  async req(method: string, path: string, body?: unknown, headers: Record<string, string> = {}) {
-    const res = await fetch(APP + path, {
-      method,
-      headers: { ...(body !== undefined ? { "Content-Type": "application/json" } : {}), ...headers, ...(this.cookie ? { Cookie: this.cookie } : {}) },
-      body: body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body),
-      redirect: "manual",
-    });
-    const set = res.headers.get("set-cookie");
-    if (set) this.cookie = set.split(";")[0];
-    const text = await res.text();
-    let json: unknown = null;
-    try {
-      json = JSON.parse(text);
-    } catch {}
-    return { status: res.status, json, text };
-  }
-  register() {
-    return this.req("POST", "/api/auth/register", { username: this.username, password: PASSWORD });
-  }
-  submit(problem: string, languageId: number, sourceCode: string) {
-    return this.req("POST", "/api/submissions", { problem, languageId, sourceCode });
-  }
-  async waitVerdict(id: number, timeoutMs = 90_000) {
-    const end = Date.now() + timeoutMs;
-    while (Date.now() < end) {
-      const view = (await this.req("GET", `/api/submissions/${id}`)).json as SubmissionView | null;
-      if (view?.verdict && view.verdict !== "pending") return view;
-      await new Promise((res) => setTimeout(res, 500));
-    }
-    throw new Error(`submission ${id} still pending after ${timeoutMs} ms`);
-  }
-  /** Submits and waits for the final verdict. */
-  async judge(problem: string, languageId: number, code: string): Promise<SubmissionView> {
-    const r = await this.submit(problem, languageId, code);
-    if (r.status !== 201) throw new Error(`${this.username}: submit ${problem} returned ${r.status} ${r.text}`);
-    return this.waitVerdict((r.json as { id: number }).id);
-  }
-}
-
-const LANG = { cpp: 54, c: 50, java: 62, python: 71, js: 63, go: 60, rust: 73 };
 
 const SOL = {
   sumCpp: `#include <iostream>\nint main(){long long a,b;std::cin>>a>>b;std::cout<<a+b<<"\\n";}`,
@@ -199,21 +140,11 @@ try {
   await setWindow(-120, -60);
   check("submissions after the end are rejected", (await early.submit("sum-of-two", LANG.cpp, SOL.sumCpp)).status === 403);
 } catch (err) {
-  failures.push(`crashed: ${err instanceof Error ? err.message : err}`);
-  console.error(err);
+  crashed(err);
 } finally {
   await sql`UPDATE contest SET starts_at = ${original.starts_at}, ends_at = ${original.ends_at} WHERE id = 1`;
-  const users = await sql<{ id: number }[]>`SELECT id FROM users WHERE username LIKE ${`e2e\\_%\\_${RUN}`}`;
-  const ids = users.map((u) => u.id);
-  if (ids.length) {
-    await sql`DELETE FROM submissions WHERE user_id IN ${sql(ids)}`;
-    await sql`DELETE FROM users WHERE id IN ${sql(ids)}`;
-  }
+  await deleteTestUsers();
   await sql.end();
 }
 
-console.log(`\n${passed} passed, ${failures.length} failed`);
-if (failures.length) {
-  console.log(failures.map((f) => `  - ${f}`).join("\n"));
-  process.exit(1);
-}
+finish();

@@ -14,8 +14,9 @@
     "problems:sync": "tsx --env-file=.env scripts/sync-problems.mts",
     "setup": "npm run db:up && npm run db:migrate && npm run problems:sync",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:e2e": "tsx --env-file=.env tests/e2e.mts",
-    "postinstall": "node scripts/copy-monaco.mjs"
+    "test:e2e": "tsx --env-file=.env tests/e2e.mts && tsx --env-file=.env tests/game-e2e.mts",
+    "postinstall": "node scripts/copy-monaco.mjs",
+    "test:e2e:game": "tsx --env-file=.env tests/game-e2e.mts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

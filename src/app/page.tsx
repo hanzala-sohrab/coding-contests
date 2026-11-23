@@ -20,7 +20,7 @@ export default async function Home() {
       await sql<{ problem_id: number; n: number }[]>`
         SELECT s.problem_id, count(DISTINCT s.user_id)::int AS n
         FROM submissions s JOIN users u ON u.id = s.user_id
-        WHERE s.verdict = 'AC' AND NOT u.is_admin GROUP BY s.problem_id`
+        WHERE s.verdict = 'AC' AND NOT u.is_admin AND s.game_round_id IS NULL GROUP BY s.problem_id`
     ).map((r) => [r.problem_id, r.n]),
   );
   const mine = new Map(
@@ -28,7 +28,7 @@ export default async function Home() {
       ? (
           await sql<{ problem_id: number; solved: boolean }[]>`
             SELECT problem_id, bool_or(verdict = 'AC') AS solved FROM submissions
-            WHERE user_id = ${user.id} GROUP BY problem_id`
+            WHERE user_id = ${user.id} AND game_round_id IS NULL GROUP BY problem_id`
         ).map((r) => [r.problem_id, r.solved])
       : [],
   );

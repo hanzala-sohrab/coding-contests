@@ -1,4 +1,5 @@
 import { sql } from "./db";
+import { gameTick } from "./game";
 import { createRuns, getRuns, STATUS } from "./judge0";
 import { getLanguage } from "./languages";
 import type { Verdict } from "./verdicts";
@@ -34,6 +35,7 @@ export async function createSubmission(args: {
   problemId: number;
   languageId: number;
   sourceCode: string;
+  gameRoundId?: number;
 }): Promise<number> {
   const language = getLanguage(args.languageId);
   if (!language) throw new Error("Unsupported language");
@@ -45,8 +47,8 @@ export async function createSubmission(args: {
   if (!problem || tests.length === 0) throw new Error("Problem has no test cases");
 
   const [{ id }] = await sql<{ id: number }[]>`
-    INSERT INTO submissions (user_id, problem_id, language_id, source_code)
-    VALUES (${args.userId}, ${args.problemId}, ${args.languageId}, ${args.sourceCode})
+    INSERT INTO submissions (user_id, problem_id, language_id, source_code, game_round_id)
+    VALUES (${args.userId}, ${args.problemId}, ${args.languageId}, ${args.sourceCode}, ${args.gameRoundId ?? null})
     RETURNING id`;
   await sql`INSERT INTO submission_tests ${sql(tests.map((t) => ({ submission_id: id, position: t.position })))}`;
 
@@ -128,8 +130,11 @@ async function finalizeIfDone(submissionId: number): Promise<void> {
     WHERE id = ${submissionId} AND verdict = 'pending'`;
 }
 
-/** Starts the background poller once per server process (survives dev hot reloads). */
-export function startPoller(intervalMs = 1000): void {
+/**
+ * Starts the background loop once per server process (survives dev hot reloads):
+ * collects Judge0 results, then decides Fastest Finger First rounds.
+ */
+export function startPoller(intervalMs = 500): void {
   const g = globalThis as { __contestPollerStarted?: boolean };
   if (g.__contestPollerStarted) return;
   g.__contestPollerStarted = true;
@@ -137,13 +142,15 @@ export function startPoller(intervalMs = 1000): void {
   const timer = setInterval(async () => {
     if (busy) return;
     busy = true;
-    try {
-      await pollOnce();
-    } catch (err) {
-      console.error("[judging] poll failed:", err instanceof Error ? err.message : err);
-    } finally {
-      busy = false;
+    // Independent steps: a Judge0 outage must not stop game rounds from timing out.
+    for (const [name, step] of [["poll", pollOnce], ["game tick", gameTick]] as const) {
+      try {
+        await step();
+      } catch (err) {
+        console.error(`[judging] ${name} failed:`, err instanceof Error ? err.message : err);
+      }
     }
+    busy = false;
   }, intervalMs);
   timer.unref();
   console.log("[judging] poller started");
